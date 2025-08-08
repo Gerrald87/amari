@@ -2,9 +2,10 @@
 
 import { Star } from 'lucide-react'
 
-export function RatingStars({ value = 4.5 }: { value?: number }) {
-  const full = Math.floor(value)
-  const half = value - full >= 0.5
+export function RatingStars({ value = 4.5 }: { value?: number | string }) {
+  const v = Number(value ?? 0)
+  const full = Math.floor(v)
+  const half = v - full >= 0.5
   return (
     <div className="flex items-center">
       {Array.from({ length: 5 }).map((_, i) => {
@@ -16,7 +17,7 @@ export function RatingStars({ value = 4.5 }: { value?: number }) {
           />
         )
       })}
-      <span className="text-xs text-muted-foreground ml-2">{value.toFixed(1)}</span>
+      <span className="text-xs text-muted-foreground ml-2">{v.toFixed(1)}</span>
     </div>
   )
 }

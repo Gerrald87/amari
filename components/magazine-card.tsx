@@ -31,6 +31,8 @@ const fallback: Magazine = {
 export function MagazineCard({ magazine = fallback }: { magazine?: Magazine }) {
   const { addToCart } = useCart()
   const { toast } = useToast()
+  const price = Number((magazine as any).price ?? 0)
+
   return (
     <div className="flex flex-col border rounded-md overflow-hidden">
       <Link href={`/magazines/${magazine.id}`} className="block">
@@ -52,7 +54,7 @@ export function MagazineCard({ magazine = fallback }: { magazine?: Magazine }) {
           <RatingStars value={magazine.rating ?? 4.5} />
         </div>
         <div className="mt-3 flex items-center gap-2">
-          <div className="font-semibold">${magazine.price.toFixed(2)}</div>
+          <div className="font-semibold">${price.toFixed(2)}</div>
           <div className="ml-auto" />
           <Button
             size="sm"

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, ShoppingBag, Sparkles, LayoutDashboard, Upload, Users, Settings, Package, BarChartIcon as ChartBar, Download, Heart } from 'lucide-react'
+import { Home, ShoppingBag, Sparkles, LayoutDashboard, Upload, Users, Settings, Package, BarChartIcon as ChartBar, Download, Heart, ShieldCheck } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -21,8 +21,9 @@ import { useAuth } from "@/components/providers"
 export function AppSidebar() {
   const { user } = useAuth()
   const pathname = usePathname()
-
   const isActive = (href: string) => pathname === href
+
+  const sellerApproved = user?.role === "seller" && user?.sellerStatus === "approved"
 
   return (
     <Sidebar collapsible="icon">
@@ -89,7 +90,7 @@ export function AppSidebar() {
 
         <SidebarSeparator />
 
-        <SidebarGroup className={user?.role === "seller" || user?.role === "admin" ? "" : "group-data-[collapsible=icon]:hidden"}>
+        <SidebarGroup className={sellerApproved ? "" : "group-data-[collapsible=icon]:hidden"}>
           <SidebarGroupLabel>Seller</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -110,6 +111,11 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
+            {!sellerApproved && user?.role === "seller" && (
+              <div className="mt-2 text-xs text-amber-700 flex items-center gap-1 px-2">
+                <ShieldCheck className="h-3.5 w-3.5" /> Seller access pending approval
+              </div>
+            )}
           </SidebarGroupContent>
         </SidebarGroup>
 

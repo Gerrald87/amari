@@ -1,12 +1,14 @@
-"use client"
-
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
-import { useAuth } from "@/components/providers"
+import { getSession } from "@/lib/auth"
+import { redirect } from "next/navigation"
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  // Ensure we’re logged in; in production you’d guard with middleware or server checks.
-  const { user } = useAuth()
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  // Server-side auth guard for all /dashboard routes
+  const session = await getSession()
+  if (!session) {
+    redirect("/login?next=/dashboard")
+  }
 
   return (
     <SidebarProvider defaultOpen>
@@ -15,7 +17,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <header className="flex h-14 items-center gap-2 border-b px-3">
           <SidebarTrigger />
           <div className="text-sm text-muted-foreground ml-2">
-            {user ? `Logged in as ${user.name} (${user.role})` : "Not signed in"}
+            {`Logged in as ${session.name} (${session.role})`}
           </div>
         </header>
         {children}

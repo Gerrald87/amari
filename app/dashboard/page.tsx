@@ -1,18 +1,23 @@
 "use client"
 
+import { useEffect, useMemo, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
 import Link from "next/link"
-import { useDB } from "@/lib/db"
 import { useAuth } from "@/components/providers"
+import { OrdersClient } from "@/lib/client"
 
 export default function DashboardHome() {
   const { user } = useAuth()
-  const { getOrdersByUser } = useDB()
-  const orders = user ? getOrdersByUser(user.id) : []
+  const [orders, setOrders] = useState<any[]>([])
 
+  useEffect(() => {
+    OrdersClient.listMine().then((r) => setOrders(r.data)).catch(() => setOrders([]))
+  }, [])
+
+  const digitalCount = useMemo(() => orders.reduce((acc, o) => acc + o.items.filter((i: any) => i.format === "digital").length, 0), [orders])
   const chartData = [
     { month: "Jan", orders: 2 },
     { month: "Feb", orders: 1 },
@@ -46,9 +51,7 @@ export default function DashboardHome() {
             <CardTitle>Downloads</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-semibold">
-              {orders.reduce((acc, o) => acc + o.items.filter((i) => i.format === "digital").length, 0)}
-            </div>
+            <div className="text-2xl font-semibold">{digitalCount}</div>
             <div className="text-xs text-muted-foreground">Digital items available</div>
           </CardContent>
         </Card>
@@ -68,12 +71,7 @@ export default function DashboardHome() {
           <CardTitle>Reading Activity</CardTitle>
         </CardHeader>
         <CardContent>
-          <ChartContainer
-            config={{
-              orders: { label: "Orders", color: "hsl(35 92% 50%)" },
-            }}
-            className="h-56"
-          >
+          <ChartContainer config={{ orders: { label: "Orders", color: "hsl(35 92% 50%)" } }} className="h-56">
             <AreaChart data={chartData}>
               <CartesianGrid vertical={false} />
               <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />

@@ -1,10 +1,13 @@
 "use client"
 
-import { useDB, type User } from "@/lib/db"
+import { useEffect, useState } from "react"
+import { AdminClient } from "@/lib/client"
 
 export default function AdminUsersPage() {
-  const users = (typeof window !== "undefined" ? (JSON.parse(localStorage.getItem("amari:users") || "[]") as User[]) : [])
-
+  const [users, setUsers] = useState<any[]>([])
+  useEffect(() => {
+    AdminClient.users().then((r) => setUsers(r.data)).catch(() => setUsers([]))
+  }, [])
   return (
     <div className="p-4 md:p-6">
       <h1 className="text-xl font-semibold mb-4">Users</h1>

@@ -1,19 +1,35 @@
 "use client"
 
-import { useDB } from "@/lib/db"
-import { useAuth } from "@/components/providers"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Download } from 'lucide-react'
+import { DownloadsClient, MagazinesClient } from "@/lib/client"
 
 export default function DownloadsPage() {
-  const { user } = useAuth()
-  const { getDigitalDownloadsForUser, getMagazineById } = useDB()
-  const items = user ? getDigitalDownloadsForUser(user.id) : []
+  const [items, setItems] = useState<Array<{ magazineId: string; purchasedAt: string }>>([])
+  const [names, setNames] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    DownloadsClient.listMine().then((r) => setItems(r.data))
+  }, [])
+  useEffect(() => {
+    async function loadNames() {
+      const map: Record<string, string> = {}
+      await Promise.all(
+        items.map(async (it) => {
+          if (!map[it.magazineId]) {
+            const mg = await MagazinesClient.get(it.magazineId)
+            map[it.magazineId] = mg.data.name
+          }
+        })
+      )
+      setNames(map)
+    }
+    if (items.length) loadNames()
+  }, [items])
 
   const download = (name: string) => {
-    const blob = new Blob([`Thank you for purchasing ${name} on Amari.\n\nMVP placeholder file.`], {
-      type: "text/plain",
-    })
+    const blob = new Blob([`Thank you for purchasing ${name} on Amari.\n\nMVP placeholder file.`], { type: "text/plain" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
@@ -30,17 +46,14 @@ export default function DownloadsPage() {
       <div className="grid gap-3">
         {items.length === 0 && <div className="text-sm text-muted-foreground">No digital items yet.</div>}
         {items.map((it) => {
-          const m = getMagazineById(it.magazineId)
-          if (!m) return null
+          const name = names[it.magazineId] || it.magazineId
           return (
             <div key={it.magazineId} className="flex items-center justify-between border rounded p-3">
               <div>
-                <div className="font-medium">{m.name}</div>
-                <div className="text-xs text-muted-foreground">
-                  Purchased: {new Date(it.purchasedAt).toLocaleDateString()}
-                </div>
+                <div className="font-medium">{name}</div>
+                <div className="text-xs text-muted-foreground">Purchased: {new Date(it.purchasedAt).toLocaleDateString()}</div>
               </div>
-              <Button onClick={() => download(m.name)} className="bg-amber-700 hover:bg-amber-800">
+              <Button onClick={() => download(name)} className="bg-amber-700 hover:bg-amber-800">
                 <Download className="h-4 w-4 mr-2" /> Download
               </Button>
             </div>

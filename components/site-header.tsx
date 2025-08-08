@@ -26,7 +26,14 @@ export function SiteHeader() {
         <nav className="hidden md:flex items-center gap-4 text-sm ml-4">
           <Link className={pathname === "/" ? "text-amber-700" : "text-muted-foreground hover:text-foreground"} href="/">Home</Link>
           <Link className={pathname.startsWith("/magazines") ? "text-amber-700" : "text-muted-foreground hover:text-foreground"} href="/magazines">Magazines</Link>
-          <Link className={pathname.startsWith("/dashboard") ? "text-amber-700" : "text-muted-foreground hover:text-foreground"} href="/dashboard">Dashboard</Link>
+          {user && (
+            <Link
+              className={pathname.startsWith("/dashboard") ? "text-amber-700" : "text-muted-foreground hover:text-foreground"}
+              href="/dashboard"
+            >
+              Dashboard
+            </Link>
+          )}
         </nav>
 
         <form onSubmit={onSearch} className="ml-auto relative hidden md:block w-[380px]">

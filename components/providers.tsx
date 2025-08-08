@@ -1,15 +1,16 @@
 "use client"
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react"
-import type { User } from "@/lib/db"
-import { useDB } from "@/lib/db"
+import { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react"
+import type { Session } from "@/lib/auth"
+import { AuthClient, OrdersClient } from "@/lib/client"
 
 type AuthCtx = {
-  user: User | null
-  login: (u: { name: string; email: string; role: User["role"] }) => boolean
-  logout: () => void
+  user: Session | null
+  register: (u: { name: string; email: string; password: string; wantSell?: boolean }) => Promise<boolean>
+  login: (u: { email: string; password: string }) => Promise<boolean>
+  logout: () => Promise<void>
 }
-const AuthContext = createContext<AuthCtx>({ user: null, login: () => false, logout: () => {} })
+const AuthContext = createContext<AuthCtx>({ user: null, register: async () => false, login: async () => false, logout: async () => {} })
 
 type CartItem = { magazineId: string; qty: number }
 type CartCtx = {
@@ -17,14 +18,14 @@ type CartCtx = {
   addToCart: (id: string, qty: number) => void
   removeFromCart: (id: string) => void
   clearCart: () => void
-  checkout: () => void
+  checkout: () => Promise<boolean>
 }
 const CartContext = createContext<CartCtx>({
   items: [],
   addToCart: () => {},
   removeFromCart: () => {},
   clearCart: () => {},
-  checkout: () => {},
+  checkout: async () => false,
 })
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -44,27 +45,38 @@ export function useCart() {
 }
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const { ensureSeed } = useDB()
+  const [user, setUser] = useState<Session | null>(null)
 
   useEffect(() => {
-    ensureSeed()
-    const raw = localStorage.getItem("amari:auth")
-    if (raw) setUser(JSON.parse(raw))
-  }, [ensureSeed])
+    AuthClient.me()
+      .then((r) => setUser(r.user))
+      .catch(() => setUser(null))
+  }, [])
 
-  const login: AuthCtx["login"] = (info) => {
-    const u: User = { id: crypto.randomUUID(), name: info.name, email: info.email, role: info.role }
-    setUser(u)
-    localStorage.setItem("amari:auth", JSON.stringify(u))
-    return true
+  const register: AuthCtx["register"] = async (info) => {
+    try {
+      const { user } = await AuthClient.register(info)
+      setUser(user)
+      return true
+    } catch {
+      return false
+    }
   }
-  const logout = () => {
+  const login: AuthCtx["login"] = async (info) => {
+    try {
+      const { user } = await AuthClient.login(info)
+      setUser(user)
+      return true
+    } catch {
+      return false
+    }
+  }
+  const logout = async () => {
+    await AuthClient.logout().catch(() => {})
     setUser(null)
-    localStorage.removeItem("amari:auth")
   }
 
-  const value = useMemo(() => ({ user, login, logout }), [user])
+  const value = useMemo(() => ({ user, register, login, logout }), [user])
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
@@ -82,27 +94,24 @@ function CartProvider({ children }: { children: React.ReactNode }) {
   const addToCart: CartCtx["addToCart"] = (id, qty) => {
     setItems((prev) => {
       const existing = prev.find((i) => i.magazineId === id)
-      if (existing) {
-        return prev.map((i) => (i.magazineId === id ? { ...i, qty: i.qty + qty } : i))
-      }
+      if (existing) return prev.map((i) => (i.magazineId === id ? { ...i, qty: i.qty + qty } : i))
       return [...prev, { magazineId: id, qty }]
     })
   }
   const removeFromCart = (id: string) => setItems((prev) => prev.filter((i) => i.magazineId !== id))
   const clearCart = () => setItems([])
 
-  const { placeOrder } = useDB()
-  const { user } = useAuth()
-  const checkout = () => {
-    if (!user) {
-      alert("Please login to checkout.")
-      return
+  const checkout = useCallback(async () => {
+    try {
+      if (items.length === 0) return false
+      await OrdersClient.checkout(items)
+      setItems([])
+      return true
+    } catch {
+      return false
     }
-    if (items.length === 0) return
-    placeOrder(user.id, items)
-    setItems([])
-  }
+  }, [items])
 
-  const value = useMemo(() => ({ items, addToCart, removeFromCart, clearCart, checkout }), [items, placeOrder, user])
+  const value = useMemo(() => ({ items, addToCart, removeFromCart, clearCart, checkout }), [items, checkout])
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
 }

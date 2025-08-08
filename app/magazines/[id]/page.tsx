@@ -3,6 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { useParams } from "next/navigation"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -10,17 +11,21 @@ import { ShoppingCart, Download, Star } from 'lucide-react'
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { RatingStars } from "@/components/rating-stars"
-import { useDB } from "@/lib/db"
 import { useCart } from "@/components/providers"
 import { useToast } from "@/hooks/use-toast"
+import { MagazinesClient } from "@/lib/client"
 
 export default function MagazineDetailPage() {
   const params = useParams<{ id: string }>()
-  const { getMagazineById } = useDB()
   const { addToCart } = useCart()
   const { toast } = useToast()
+  const [magazine, setMagazine] = useState<any | null>(null)
 
-  const magazine = getMagazineById(params.id)
+  useEffect(() => {
+    if (!params?.id) return
+    MagazinesClient.get(params.id).then((r) => setMagazine(r.data)).catch(() => setMagazine(null))
+  }, [params?.id])
+
   if (!magazine) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -44,25 +49,12 @@ export default function MagazineDetailPage() {
       <main className="container mx-auto px-4 py-8 flex-1">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-5">
-            <Image
-              src={magazine.coverUrl || "/placeholder.svg"}
-              alt={`${magazine.name} cover`}
-              width={600}
-              height={800}
-              className="w-full h-auto rounded-md object-cover border"
-            />
+            <Image src={magazine.coverUrl || "/placeholder.svg"} alt={`${magazine.name} cover`} width={600} height={800} className="w-full h-auto rounded-md object-cover border" />
             <div className="mt-4">
               <div className="text-sm font-medium">Preview</div>
               <div className="mt-2 grid grid-cols-3 gap-2">
-                {magazine.samplePages?.slice(0, 6).map((p, i) => (
-                  <Image
-                    key={i}
-                    src={p || "/placeholder.svg"}
-                    alt={`Preview page ${i + 1}`}
-                    width={220}
-                    height={300}
-                    className="w-full h-auto rounded border object-cover"
-                  />
+                {magazine.samplePages?.slice(0, 6).map((p: string, i: number) => (
+                  <Image key={i} src={p || "/placeholder.svg"} alt={`Preview page ${i + 1}`} width={220} height={300} className="w-full h-auto rounded border object-cover" />
                 ))}
               </div>
             </div>
@@ -89,7 +81,7 @@ export default function MagazineDetailPage() {
             <p className="text-sm leading-6 text-muted-foreground">{magazine.summary}</p>
 
             <div className="mt-6 flex items-center gap-2 flex-wrap">
-              {magazine.tags?.map((t) => (
+              {magazine.tags?.map((t: string) => (
                 <Badge key={t} variant="outline" className="rounded-full">
                   #{t}
                 </Badge>
@@ -98,7 +90,7 @@ export default function MagazineDetailPage() {
 
             <div className="mt-8 flex items-center gap-6">
               <div>
-                <div className="text-3xl font-semibold">${magazine.price.toFixed(2)}</div>
+                <div className="text-3xl font-semibold">${Number(magazine.price).toFixed(2)}</div>
                 <div className="text-xs text-muted-foreground capitalize">{magazine.format} edition</div>
               </div>
               <div className="ml-auto" />
@@ -127,9 +119,7 @@ export default function MagazineDetailPage() {
                       <Star className="text-amber-200 h-4 w-4" />
                       <span className="text-xs text-muted-foreground ml-2">by Reader {i}</span>
                     </div>
-                    <p className="text-sm mt-2 text-muted-foreground">
-                      Great insights and beautiful design. Looking forward to the next issue!
-                    </p>
+                    <p className="text-sm mt-2 text-muted-foreground">Great insights and beautiful design. Looking forward to the next issue!</p>
                   </div>
                 ))}
               </div>

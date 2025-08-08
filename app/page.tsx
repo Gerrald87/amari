@@ -2,7 +2,7 @@
 
 import { ArrowRight, Flame, Stars, Sparkles, ChevronRight } from 'lucide-react'
 import Link from "next/link"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -10,20 +10,19 @@ import { MagazineCard } from "@/components/magazine-card"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { HeroCarousel } from "@/components/hero-carousel"
-import { useDB } from "@/lib/db"
 import { useAuth } from "@/components/providers"
+import { MagazinesClient } from "@/lib/client"
 
 export default function HomePage() {
-  const { ensureSeed, getMagazines } = useDB()
   const { user } = useAuth()
+  const [mags, setMags] = useState<any[]>([])
 
   useEffect(() => {
-    ensureSeed()
-  }, [ensureSeed])
+    MagazinesClient.list().then((r) => setMags(r.data))
+  }, [])
 
-  const mags = getMagazines()
   const trending = mags.slice(0, 8)
-  const editors = mags.filter((m) => m.tags?.includes("editors-pick")).slice(0, 6)
+  const editors = mags.filter((m) => (m.tags || []).includes("editors-pick")).slice(0, 6)
   const culture = mags.filter((m) => m.category === "Culture").slice(0, 4)
 
   return (
@@ -35,28 +34,25 @@ export default function HomePage() {
             slides={[
               {
                 title: "Discover Africa’s Finest Magazines",
-                subtitle:
-                  "From vibrant culture and fashion to business and politics — explore thousands of print and digital editions.",
+                subtitle: "From vibrant culture and fashion to business and politics — explore thousands of print and digital editions.",
                 ctaLabel: "Browse Magazines",
                 ctaHref: "/magazines",
-                image: "/placeholder-3f0gh.png"
+                image: "/placeholder-3f0gh.png",
               },
               {
                 title: "New Issues Every Week",
-                subtitle:
-                  "Stay ahead with Editor’s Picks and trending releases from top publishers and independent creators.",
+                subtitle: "Stay ahead with Editor’s Picks and trending releases from top publishers and independent creators.",
                 ctaLabel: "See What’s Trending",
                 ctaHref: "/magazines?sort=trending",
-                image: "/african-magazine-spread.png"
+                image: "/african-magazine-spread.png",
               },
               {
                 title: "Print or Digital — Your Choice",
-                subtitle:
-                  "Buy single issues, subscribe monthly/yearly, or download digital editions instantly.",
+                subtitle: "Buy single issues, subscribe monthly/yearly, or download digital editions instantly.",
                 ctaLabel: "Start Reading",
                 ctaHref: "/magazines?format=digital",
-                image: "/african-grid.png"
-              }
+                image: "/african-grid.png",
+              },
             ]}
           />
         </section>
@@ -116,9 +112,7 @@ export default function HomePage() {
 
         <section className="container mx-auto px-4 py-10">
           <h2 className="text-xl md:text-2xl font-semibold">Browse by Category or Country</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Tap a chip to explore curated magazines.
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">Tap a chip to explore curated magazines.</p>
           <div className="mt-4 flex flex-wrap gap-3">
             {["Fashion", "Business", "News", "Culture", "Arts", "Politics", "Lifestyle"].map((c) => (
               <Link key={c} href={`/magazines?category=${encodeURIComponent(c)}`}>
@@ -130,17 +124,13 @@ export default function HomePage() {
             <Separator className="mx-1 h-7" orientation="vertical" />
             {["Kenya", "Nigeria", "Ghana", "South Africa", "Ethiopia", "Egypt"].map((cty) => (
               <Link key={cty} href={`/magazines?country=${encodeURIComponent(cty)}`}>
-                <Badge className="rounded-full py-2 px-4 bg-amber-600 hover:bg-amber-700 text-white">
-                  {cty}
-                </Badge>
+                <Badge className="rounded-full py-2 px-4 bg-amber-600 hover:bg-amber-700 text-white">{cty}</Badge>
               </Link>
             ))}
           </div>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center gap-3">
-            <div className="text-sm text-muted-foreground">
-              {user ? `Welcome back, ${user.name}!` : "Become a seller and reach readers worldwide."}
-            </div>
+            <div className="text-sm text-muted-foreground">{user ? `Welcome back, ${user.name}!` : "Become a seller and reach readers worldwide."}</div>
             <div className="ml-auto" />
             <Link href={user?.role === "seller" ? "/dashboard/seller" : "/dashboard/seller"}>
               <Button className="bg-amber-700 hover:bg-amber-800">
