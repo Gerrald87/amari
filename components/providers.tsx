@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react"
 import type { Session } from "@/lib/auth"
 import { AuthClient, OrdersClient } from "@/lib/client"
+import { Toaster } from "@/components/toaster"
 
 type AuthCtx = {
   user: Session | null
@@ -31,7 +32,10 @@ const CartContext = createContext<CartCtx>({
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
-      <CartProvider>{children}</CartProvider>
+      <CartProvider>
+        {children}
+        <Toaster />
+      </CartProvider>
     </AuthProvider>
   )
 }

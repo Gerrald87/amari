@@ -84,6 +84,16 @@ export function AppSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              {!sellerApproved && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={isActive("/dashboard/seller-request")}>
+                    <Link href="/dashboard/seller-request">
+                      <ShieldCheck />
+                      <span>Become a Seller</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

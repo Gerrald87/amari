@@ -132,7 +132,7 @@ export default function HomePage() {
           <div className="mt-8 flex flex-col sm:flex-row items-center gap-3">
             <div className="text-sm text-muted-foreground">{user ? `Welcome back, ${user.name}!` : "Become a seller and reach readers worldwide."}</div>
             <div className="ml-auto" />
-            <Link href={user?.role === "seller" ? "/dashboard/seller" : "/dashboard/seller"}>
+            <Link href={user?.role === "seller" && user?.sellerStatus === "approved" ? "/dashboard/seller" : "/dashboard/seller-request"}>
               <Button className="bg-amber-700 hover:bg-amber-800">
                 Start Selling <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
