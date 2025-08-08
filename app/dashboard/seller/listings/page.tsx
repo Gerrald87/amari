@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, Trash2, Save } from 'lucide-react'
 import { useToast } from "@/hooks/use-toast"
-import { MagazinesClient } from "@/lib/client"
+import { MagazinesClient, SellerClient } from "@/lib/client"
 
 export default function SellerListingsPage() {
   const { user } = useAuth()
@@ -33,12 +33,10 @@ export default function SellerListingsPage() {
   const canCreate = user?.role === "seller" && user?.sellerStatus === "approved"
 
   useEffect(() => {
-    // Load only the seller's listings
-    ;(async () => {
-      const all = await MagazinesClient.list().then((r) => r.data).catch(() => [])
-      setMyMags(all.filter((m) => m.sellerId === user?.userId))
-    })()
-  }, [user?.userId])
+    SellerClient.listings()
+      .then((r) => setMyMags(r.data))
+      .catch(() => setMyMags([]))
+  }, [])
 
   const onCreate = async () => {
     if (!user) {

@@ -7,9 +7,27 @@ import { Badge } from "@/components/ui/badge"
 import { RatingStars } from "@/components/rating-stars"
 import { useCart } from "@/components/providers"
 import { useToast } from "@/hooks/use-toast"
-import type { Magazine } from "@/lib/db"
 
-const fallback: Magazine = {
+type UIMagazine = {
+  id: string
+  name: string
+  price: number
+  language: string
+  country: string
+  category: string
+  format: "print" | "digital"
+  issueDate: string
+  summary: string
+  coverUrl: string
+  rating?: number
+  reviewsCount?: number
+  sellerId: string
+  tags?: string[]
+  approved?: boolean
+  samplePages?: string[]
+}
+
+const fallback: UIMagazine = {
   id: "0",
   name: "Untitled",
   price: 0,
@@ -28,7 +46,7 @@ const fallback: Magazine = {
   samplePages: [],
 }
 
-export function MagazineCard({ magazine = fallback }: { magazine?: Magazine }) {
+export function MagazineCard({ magazine = fallback }: { magazine?: UIMagazine }) {
   const { addToCart } = useCart()
   const { toast } = useToast()
   const price = Number((magazine as any).price ?? 0)

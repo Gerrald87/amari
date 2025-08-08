@@ -1,26 +1,36 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
-import { useDB } from "@/lib/db"
-import { useAuth } from "@/components/providers"
+import { SellerClient } from "@/lib/client"
+
+type Point = { month: string; sales: number }
 
 export default function SellerAnalyticsPage() {
-  const { user } = useAuth()
-  const { getSalesForSeller } = useDB()
-  const data = user ? getSalesForSeller(user.id) : []
+  const [chartData, setChartData] = useState<Point[] | null>(null)
 
-  const chartData = data.length
-    ? data
-    : [
-        { month: "Jan", sales: 120 },
-        { month: "Feb", sales: 80 },
-        { month: "Mar", sales: 140 },
-        { month: "Apr", sales: 70 },
-        { month: "May", sales: 160 },
-        { month: "Jun", sales: 200 },
-      ]
+  useEffect(() => {
+    SellerClient.analytics()
+      .then((r) => setChartData(r.data))
+      .catch(() =>
+        setChartData([
+          { month: "Jan", sales: 120 },
+          { month: "Feb", sales: 80 },
+          { month: "Mar", sales: 140 },
+          { month: "Apr", sales: 70 },
+          { month: "May", sales: 160 },
+          { month: "Jun", sales: 200 },
+        ])
+      )
+  }, [])
+
+  const data = chartData || []
+  const avg =
+    data.length > 0
+      ? data.reduce((s, d) => s + (Number(d.sales) || 0), 0) / data.length
+      : 0
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -31,8 +41,8 @@ export default function SellerAnalyticsPage() {
             <CardTitle>Total Sales</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-semibold">${(chartData.reduce((s, d) => s + d.sales, 0) / 6).toFixed(2)}</div>
-            <div className="text-xs text-muted-foreground">Avg per month (mock)</div>
+            <div className="text-2xl font-semibold">${avg.toFixed(2)}</div>
+            <div className="text-xs text-muted-foreground">Avg per month</div>
           </CardContent>
         </Card>
         <Card>
@@ -40,8 +50,8 @@ export default function SellerAnalyticsPage() {
             <CardTitle>Active Listings</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-semibold">{Math.floor(Math.random() * 10) + 4}</div>
-            <div className="text-xs text-muted-foreground">Mock metric</div>
+            <div className="text-2xl font-semibold">—</div>
+            <div className="text-xs text-muted-foreground">Coming soon</div>
           </CardContent>
         </Card>
         <Card>
@@ -49,8 +59,8 @@ export default function SellerAnalyticsPage() {
             <CardTitle>Subscribers</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-semibold">{Math.floor(Math.random() * 300) + 120}</div>
-            <div className="text-xs text-muted-foreground">Mock metric</div>
+            <div className="text-2xl font-semibold">—</div>
+            <div className="text-xs text-muted-foreground">Coming soon</div>
           </CardContent>
         </Card>
       </div>
@@ -66,7 +76,7 @@ export default function SellerAnalyticsPage() {
             }}
             className="h-56"
           >
-            <AreaChart data={chartData}>
+            <AreaChart data={data}>
               <CartesianGrid vertical={false} />
               <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
               <ChartTooltip content={<ChartTooltipContent />} />

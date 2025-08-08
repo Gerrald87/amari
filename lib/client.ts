@@ -43,3 +43,8 @@ export const AdminClient = {
   pendingMagazines: () => api<{ data: any[] }>(`/api/admin/magazines`),
   approveMagazine: (id: string) => api<{ ok: true }>(`/api/admin/magazines/${id}/approve`, { method: "POST" }),
 }
+
+export const SellerClient = {
+  analytics: () => api<{ data: Array<{ month: string; sales: number }> }>("/api/seller/analytics"),
+  listings: () => api<{ data: any[] }>("/api/seller/listings"),
+}
